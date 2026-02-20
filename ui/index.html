@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Children Story Agent Studio</title>
+    <link rel="stylesheet" href="/ui/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Children Story Agent Studio</h1>
+      <p>
+        Multi-agent orchestration for best-selling-quality children's stories
+      </p>
+      <button id="darkModeToggle" type="button">AI Dark Mode</button>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Start Story</h2>
+        <div class="mode-panel">
+          <div id="modeWarning" class="warning-banner hidden"></div>
+          <label>
+            Agent Mode
+            <select id="agentModeSelect">
+              <option value="mock">mock</option>
+              <option value="openai">openai</option>
+            </select>
+          </label>
+          <button id="setModeBtn" type="button">Apply Mode</button>
+          <div id="modeMeta"></div>
+        </div>
+        <form id="storyForm">
+          <label
+            >Title <input id="title" value="Tim the Flying Dog" required
+          /></label>
+          <label
+            >Age Group <input id="ageGroup" type="number" value="7" required
+          /></label>
+          <label
+            >Length Target
+            <input id="lengthTarget" type="number" value="1000" required
+          /></label>
+          <label
+            >Tone
+            <input
+              id="tone"
+              value="playful, encouraging, slightly adventurous"
+              required
+          /></label>
+          <button type="submit">Start</button>
+        </form>
+      </section>
+
+      <section class="card two-col">
+        <div>
+          <h2>Stories</h2>
+          <button id="refreshStories">Refresh</button>
+          <ul id="storyList"></ul>
+        </div>
+
+        <div>
+          <h2>Selected Story</h2>
+          <div id="storyMeta">None selected</div>
+          <div class="actions">
+            <button id="cancelBtn" disabled>Cancel</button>
+            <button id="downloadBtn" disabled>Download .txt</button>
+          </div>
+          <h3>Steps Timeline</h3>
+          <div id="stepActionsHint" class="step-actions-hint"></div>
+          <ul id="stepsTimeline"></ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Logs (Live)</h2>
+        <div id="logs"></div>
+      </section>
+    </main>
+
+    <template id="stepTemplate">
+      <li class="step-item">
+        <div class="step-row">
+          <span class="step-id"></span>
+          <span class="step-agent"></span>
+          <span class="step-status"></span>
+        </div>
+        <div class="step-controls">
+          <button data-action="retry">Retry</button>
+          <button data-action="rerun">Re-run</button>
+        </div>
+      </li>
+    </template>
+
+    <script src="/ui/main.js"></script>
+  </body>
+</html>
