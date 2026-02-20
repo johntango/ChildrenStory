@@ -15,7 +15,7 @@ A prototype multi-agent children's story studio using Express and an `@openai/ag
 
 - Orchestrator pipeline with step dispatch and per-step state
 - Specialist agents with role prompts, tool access, and short memory
-- Tools: `researchTool`, `readabilityTool`, `grammarTool`, `illustrationTool`, `publishTool`
+- Tools: `researchTool`, `grammarTool`, `illustrationTool`, `publishTool`
 - Structured logs for every agent and tool call
 - SSE live stream for progress updates
 - UI with timeline, live logs, retry/rerun/cancel controls
@@ -61,7 +61,7 @@ That wrapper does all of the following for every tool call:
 1. acquires semaphore (concurrency limit per story)
 2. emits `tool.started`
 3. writes structured log with `status: running`
-4. executes the tool function (`researchTool`, `readabilityTool`, `grammarTool`, `illustrationTool`, `publishTool`)
+4. executes the tool function (`researchTool`, `grammarTool`, `illustrationTool`, `publishTool`)
 5. emits `tool.finished` (or `tool.failed`)
 6. writes structured completion/failure log with duration and output summary
 7. releases semaphore
@@ -81,7 +81,7 @@ Data flows like this:
 
 Concrete examples:
 
-- Author step calls `readabilityTool`; adjusted scene drafts are saved to `artifacts.author`.
+- Author step generates tone-aligned scene drafts and stores them in `artifacts.author`.
 - Psychology and Editor steps read from `artifacts.author.sceneDrafts`.
 - Illustration step reads author scenes and writes illustration metadata to `artifacts.illustrations`.
 - Publish step merges all artifacts into final story package.
@@ -132,10 +132,10 @@ sequenceDiagram
   ORCH-->>UI: SSE agent.finished(plan)
 
   ORCH->>AG: run author-draft(input includes brief + plan artifacts)
-  AG->>TOOL: readabilityTool(scene 1)
+  AG->>TOOL: grammarTool(editor polishing)
   TOOL-->>UI: SSE tool.started/tool.finished
   TOOL->>STORE: structured log entries
-  AG->>TOOL: readabilityTool(scene 2..n)
+  AG->>TOOL: illustrationTool(scene prompts)
   TOOL->>STORE: structured log entries
   AG-->>ORCH: authorOutput
   ORCH->>STORE: artifacts.author = authorOutput
