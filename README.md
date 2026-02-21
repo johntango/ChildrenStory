@@ -68,6 +68,28 @@ That wrapper does all of the following for every tool call:
 
 So tools are not called directly from routes; they are called through the orchestrator’s tracked execution path.
 
+### 3.1) How tools are passed to the LLM (`@openai/agents` path)
+
+In OpenAI mode, `lib/openaiAgentClient.js` is the adapter between app-level agents and the SDK.
+
+The client does this for each LLM call:
+
+1. Loads SDK (`@openai/agents`) and runtime settings (model, timeouts, fallback policy).
+2. Normalizes tool definitions via `normalizeToolsForSdk(...)`.
+
+- If a tool is already an SDK `FunctionTool`, it is passed through.
+- If a tool has `{ name, execute, parameters }`, it is converted using SDK `tool(...)`.
+- String-only tool names are metadata only and are not executable SDK tools.
+
+3. Runs the model via one of:
+
+- `runAgent(...)` if available, or
+- `Runner.run(...)` / `run(...)` with an `Agent` instance.
+
+4. Forces JSON-oriented responses (`response_format: json_object`) and parses output.
+
+So, SDK tools are attached at call time and executed by the model only when executable tool definitions are supplied.
+
 ### 4) How tool responses enter the "context window"
 
 In this project, the "context window" is the step input object passed into each agent run (not a hidden chat buffer).
@@ -87,6 +109,24 @@ Concrete examples:
 - Publish step merges all artifacts into final story package.
 
 For OpenAI mode, each agent call receives a JSON payload as input via `lib/openaiAgentClient.js`, which means the accumulated artifact data is explicitly present in the model input for that step.
+
+### 4.1) How results are returned to the LLM on later steps
+
+Tool and agent outputs are not discarded after one step; they are persisted and then re-injected into later LLM inputs.
+
+Mechanically:
+
+1. Agent/tool output is saved into `story.artifacts`.
+2. Next step builds its `input` object from these artifacts.
+3. That input is serialized and sent to `runAgent(...)` / `Runner.run(...)`.
+4. The model therefore sees prior outputs as part of its current context payload.
+
+Example chain:
+
+- `author-draft` writes `artifacts.author.sceneDrafts`.
+- `psychology-review` and `editor-polish` read those drafts.
+- `narration-notes` reads `artifacts.editor.editedText`.
+- `publish` merges all artifacts into final package.
 
 ### 5) Logging/observability model
 
@@ -132,10 +172,7 @@ sequenceDiagram
   ORCH-->>UI: SSE agent.finished(plan)
 
   ORCH->>AG: run author-draft(input includes brief + plan artifacts)
-  AG->>TOOL: grammarTool(editor polishing)
   TOOL-->>UI: SSE tool.started/tool.finished
-  TOOL->>STORE: structured log entries
-  AG->>TOOL: illustrationTool(scene prompts)
   TOOL->>STORE: structured log entries
   AG-->>ORCH: authorOutput
   ORCH->>STORE: artifacts.author = authorOutput
@@ -143,7 +180,11 @@ sequenceDiagram
   Note over ORCH,STORE: Later steps read from artifacts as context input
   ORCH->>AG: run psychology-review(input uses artifacts.author)
   ORCH->>AG: run editor-polish(input uses artifacts.author)
+  AG->>TOOL: grammarTool(editor polishing)
+  TOOL->>STORE: structured log entries
   ORCH->>AG: run illustration-meta(input uses artifacts.author)
+  AG->>TOOL: illustrationTool(scene prompts)
+  TOOL->>STORE: structured log entries
   ORCH->>AG: run marketing-package(input uses brief + artifacts)
   ORCH->>AG: run narration-notes(input uses artifacts.editor)
 

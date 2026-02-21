@@ -106,7 +106,9 @@ function renderSteps(steps, storyStatus) {
     const root = fragment.querySelector(".step-item");
     root.dataset.stepId = step.id;
     fragment.querySelector(".step-id").textContent = step.id;
-    fragment.querySelector(".step-agent").textContent = step.agent;
+    const providerText = step.provider ? ` • ${step.provider}` : "";
+    const modelText = step.model ? ` (${step.model})` : "";
+    fragment.querySelector(".step-agent").textContent = `${step.agent}${providerText}${modelText}`;
     fragment.querySelector(".step-status").textContent = step.status;
 
     const retryBtn = fragment.querySelector("button[data-action='retry']");
@@ -172,7 +174,8 @@ function renderModeState(data) {
     agentModeSelect.value = data.mode;
   }
   const keyState = data.openAiKeyPresent ? "OPENAI_API_KEY present" : "OPENAI_API_KEY missing";
-  modeMeta.textContent = `Current mode: ${data.mode} • ${keyState}`;
+  const modelText = data.model ? ` • model: ${data.model}` : "";
+  modeMeta.textContent = `Current mode: ${data.mode}${modelText} • ${keyState}`;
 
   if (data.mode === "openai" && !data.openAiKeyPresent) {
     modeWarning.textContent = "OpenAI mode is selected, but OPENAI_API_KEY is missing. Story runs will fail until a key is provided.";

@@ -148,6 +148,7 @@ app.get("/admin/mode", (_req, res) => {
   return res.json({
     mode: agentClient.getMode(),
     supportedModes: agentClient.getSupportedModes(),
+    model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
     openAiKeyPresent: Boolean(process.env.OPENAI_API_KEY)
   });
 });
@@ -159,6 +160,7 @@ app.post("/admin/mode", (req, res) => {
     return res.json({
       mode: updatedMode,
       supportedModes: agentClient.getSupportedModes(),
+      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
       openAiKeyPresent: Boolean(process.env.OPENAI_API_KEY)
     });
   } catch (error) {
